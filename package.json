@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/JaxonC-06/tinyapp/issues"
   },
-  "homepage": "https://github.com/JaxonC-06/tinyapp#readme"
+  "homepage": "https://github.com/JaxonC-06/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.21.2"
+  }
 }

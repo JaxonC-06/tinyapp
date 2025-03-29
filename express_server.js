@@ -2,7 +2,12 @@ const express = require('express');
 const app = express();
 const PORT = 8080; // default port
 
+app.use(express.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
+
+function generateRandomString() {
+  Math.random().toString(36).slice(2, 8);
+};
 
 const urlDataBase = {
   'b2xVn2': 'http://www.lighthouselabs.ca',
@@ -24,6 +29,15 @@ app.get('/hello', (req, res) => {
 app.get('/urls', (req, res) => {
   const templateVars = { urls: urlDataBase };
   res.render('urls_index', templateVars);
+});
+
+app.post('/urls', (req, res) => {
+  console.log(req.body);
+  res.send('Ok');
+});
+
+app.get('/urls/new', (req, res) => {
+  res.render('urls_new');
 });
 
 app.get('/urls/:id', (req, res) => {

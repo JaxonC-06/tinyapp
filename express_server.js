@@ -49,6 +49,12 @@ app.get('/urls/:id', (req, res) => {
   res.render('urls_show', templateVars);
 });
 
+app.get('/u/:id', (req, res) => {
+  const urlId = req.params.id;
+  const longURL = urlDataBase[urlId];
+  res.redirect(longURL);
+});
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}`);
 });

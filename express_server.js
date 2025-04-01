@@ -37,6 +37,11 @@ app.post('/urls', (req, res) => {
   res.redirect(`/urls/${shortId}`);
 });
 
+app.post('/login', (req, res) => {
+  res.cookie('username', req.body.username);
+  res.redirect('/urls');
+})
+
 app.get('/urls/new', (req, res) => {
   res.render('urls_new');
 });

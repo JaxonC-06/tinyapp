@@ -29,6 +29,17 @@ const users = {
   },
 };
 
+const userLookup = function (email) {
+  for (const userID in users) {
+    const currentUser = users[userID]
+    if (currentUser.email === email) {
+      return currentUser;
+    }
+  }
+
+  return null;
+};
+
 app.get('/', (req, res) => {
   res.send('Hello!');
 });
@@ -46,6 +57,25 @@ app.get('/register', (req, res) => {
 });
 
 app.post('/register', (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+
+  if (!email || !password) {
+    return res.status(400).send(`
+      <h1>400: Page Not Found</h1>
+      <h3>No email or password was provided, please try again.</h3>
+      <a href="/register">Go back to registration</a>
+    `);
+  }
+
+  if (userLookup(email)) {
+    return res.status(400).send(`
+      <h1>400: Page Not Found</h1>
+      <h3>An account with this email already exists, please try again.</h3>
+      <a href="/register">Go back to registration</a>
+    `);
+  }
+
   const newID = generateRandomString();
 
   users[newID] = {

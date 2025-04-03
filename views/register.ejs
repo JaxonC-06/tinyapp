@@ -17,16 +17,17 @@
   </head>
 
   <body>
+    <%- include('partials/_header') %>
     <main style="margin: 1em;">
       <h1>Register</h1>
       <form method="POST" action="/register">
-        <div>
-          <label for="email">Email:</label>
-          <input type="email" name="email">
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" class="form-control" name="email" placeholder="Enter email" style="width: 300px">
         </div>
-        <div>
-          <label for="password">Password:</label>
-          <input type="password" name="password">
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" class="form-control" name="password" placeholder="Enter password" style="width: 300px">
         </div>
         <button type="submit" class="btn btn-primary">Register</button>
       </form>

@@ -53,7 +53,10 @@ app.get('/hello', (req, res) => {
 });
 
 app.get('/register', (req, res) => {
-  res.render('register');
+  const user_id = req.cookies['user_id'];
+  const user = users[user_id];
+  const templateVars = { user };
+  res.render('register', templateVars);
 });
 
 app.post('/register', (req, res) => {
@@ -89,7 +92,10 @@ app.post('/register', (req, res) => {
 });
 
 app.get('/login', (req, res) => {
-  res.render('login');
+  const user_id = req.cookies['user_id'];
+  const user = users[user_id];
+  const templateVars = { user };
+  res.render('login', templateVars);
 });
 
 app.post('/login', (req, res) => {

@@ -93,13 +93,35 @@ app.get('/login', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-  res.cookie('username', req.body.username);
+  const email = req.body.email;
+  const password = req.body.password;
+  const user = userLookup(email);
+
+  if (!user) {
+    return res.status(403).send(`
+      <h1>Status Code: 403</h1>
+      <h3>There is no account linked to this email. Please verify your spelling, or click the link below to create an account.</h3>
+      <a href="/register">Create an Account</a>
+    `);
+  }
+
+  if (user) {
+    if (password !== user.password) {
+      return res.status(403).send(`
+        <h1>Status Code: 403</h1>
+        <h3>The password was not correct. Please verify your spelling and click the link below to try again.</h3>
+        <a href="/login">Login</a>
+      `);
+    }
+  }
+
+  res.cookie('user_id', user.id);
   res.redirect('/urls');
 });
 
 app.post('/logout', (req, res) => {
-  res.clearCookie('url_id');
-  res.redirect('/urls');
+  res.clearCookie('user_id');
+  res.redirect('/login');
 });
 
 app.get('/urls', (req, res) => {

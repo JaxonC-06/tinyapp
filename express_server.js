@@ -1,11 +1,17 @@
+// Initializing the app, and importing the required packages
+
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = 8080; // default port
 
+// Set up app to use EJS and cookie-parser
+
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.set('view engine', 'ejs');
+
+// This function generates a random string, to be used with links and user_id's
 
 function generateRandomString() {
   return Math.random().toString(36).slice(2, 8);
@@ -29,6 +35,8 @@ const users = {
   },
 };
 
+// This function verifies a registered user
+
 const userLookup = function (email) {
   for (const userID in users) {
     const currentUser = users[userID]
@@ -39,6 +47,8 @@ const userLookup = function (email) {
 
   return null;
 };
+
+// The following three functions are implemented for project grading, but provide no practical use
 
 app.get('/', (req, res) => {
   res.send('Hello!');
@@ -51,6 +61,8 @@ app.get('/urls.json', (req, res) => {
 app.get('/hello', (req, res) => {
   res.send('<html><body>Hello <b>World</b></body></html>\n');
 });
+
+// The two functions below control the '/register' url
 
 app.get('/register', (req, res) => {
   const user_id = req.cookies['user_id'];
@@ -91,6 +103,8 @@ app.post('/register', (req, res) => {
   res.redirect('/urls');
 });
 
+// The two functions below control the '/login' url
+
 app.get('/login', (req, res) => {
   const user_id = req.cookies['user_id'];
   const user = users[user_id];
@@ -125,10 +139,14 @@ app.post('/login', (req, res) => {
   res.redirect('/urls');
 });
 
+// The '/logout' function allows the user to clear their cookies
+
 app.post('/logout', (req, res) => {
   res.clearCookie('user_id');
   res.redirect('/login');
 });
+
+// User can view their saved urls
 
 app.get('/urls', (req, res) => {
   const user_id = req.cookies['user_id'];
@@ -137,11 +155,15 @@ app.get('/urls', (req, res) => {
   res.render('urls_index', templateVars);
 });
 
+// Posts a new url and short url to page '/urls'
+
 app.post('/urls', (req, res) => {
   const shortId = generateRandomString();
   urlDataBase[shortId] = req.body.longURL;
   res.redirect(`/urls/${shortId}`);
 });
+
+// Create a new short url
 
 app.get('/urls/new', (req, res) => {
   const user_id = req.cookies['user_id'];
@@ -149,6 +171,8 @@ app.get('/urls/new', (req, res) => {
   const templateVars = { user }
   res.render('urls_new', templateVars);
 });
+
+// Fetches a page for a specific short url id
 
 app.get('/urls/:id', (req, res) => {
   const urlID = req.params.id;
@@ -160,11 +184,15 @@ app.get('/urls/:id', (req, res) => {
   res.render('urls_show', templateVars);
 });
 
+// Uses the short id to access the normal url
+
 app.get('/u/:id', (req, res) => {
   const urlId = req.params.id;
   const longURL = urlDataBase[urlId];
   res.redirect(longURL);
 });
+
+// Update an existing long url
 
 app.post('/urls/:id', (req, res) => {
   const urlId = req.params.id;
@@ -173,6 +201,8 @@ app.post('/urls/:id', (req, res) => {
   urlDataBase[urlId] = newLongURL;
   res.redirect('/urls');
 });
+
+// Delete a short and long url pair
 
 app.post('/urls/:id/delete', (req, res) => {
   const urlId = req.params.id;

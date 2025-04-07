@@ -203,15 +203,15 @@ app.post('/urls', (req, res) => {
     return res.send(`
       <h1>You must be logged in to shorten URLs</h1>
     `);
-  }
-
-  const shortId = generateRandomString();
-  urlDataBase[shortId] = {
-    longURL: req.body.longURL,
-    userID: user_id,
-  };
+  } else {
+    const shortId = generateRandomString();
+    urlDataBase[shortId] = {
+      longURL: req.body.longURL,
+      userID: user_id,
+    };
   
-  res.redirect(`/urls/${shortId}`);
+    res.redirect(`/urls/${shortId}`);
+  }
 });
 
 // Create a new short url
@@ -264,7 +264,7 @@ app.get('/u/:id', (req, res) => {
       <h1>The shortened ID ${urlId} does not exist at http://localhost:8080/u/${urlId}</h1>
     `);
   } else {
-    res.redirect(longURL);
+    res.redirect(longURL.longURL);
   }
 });
 

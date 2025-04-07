@@ -2,6 +2,7 @@
 
 const express = require('express');
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcryptjs');
 const app = express();
 const PORT = 8080; // default port
 
@@ -97,6 +98,7 @@ app.get('/register', (req, res) => {
 app.post('/register', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, 10);
 
   if (!email || !password) {
     return res.status(400).send(`
@@ -119,7 +121,7 @@ app.post('/register', (req, res) => {
   users[newID] = {
     id: newID,
     email: req.body.email,
-    password: req.body.password
+    password: hashedPassword,
   },
 
   res.cookie('user_id', newID);
@@ -154,7 +156,10 @@ app.post('/login', (req, res) => {
   }
 
   if (user) {
-    if (password !== user.password) {
+    if (bcrypt.compareSync(password, user.password)) {
+      res.cookie('user_id', user.id);
+      res.redirect('/urls');
+    } else {
       return res.status(403).send(`
         <h1>Status Code: 403</h1>
         <h3>The password was not correct. Please verify your spelling and click the link below to try again.</h3>
@@ -162,9 +167,6 @@ app.post('/login', (req, res) => {
       `);
     }
   }
-
-  res.cookie('user_id', user.id);
-  res.redirect('/urls');
 });
 
 // The '/logout' function allows the user to clear their cookies

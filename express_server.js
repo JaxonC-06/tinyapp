@@ -1,6 +1,6 @@
 // Initializing the app, and importing the required packages
 
-const express = require('express'); 
+const express = require('express');
 const cookieSession = require('cookie-session'); // Access the cookies
 const bcrypt = require('bcryptjs'); // Bcrypt is used to protect passwords
 const { userLookup, urlsForUser, generateRandomString } = require('./helpers');
@@ -40,7 +40,7 @@ const users = {
   },
 };
 
-// The two functions below control the '/register' url
+// Loads the register page of TinyApp
 
 app.get('/register', (req, res) => {
   const userId = req.session.userId;
@@ -54,10 +54,12 @@ app.get('/register', (req, res) => {
   }
 });
 
+// Registers the user to the users database
+
 app.post('/register', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  const hashedPassword = bcrypt.hashSync(password, 10);
+  const hashedPassword = bcrypt.hashSync(password, 10); // Hash password, for security
 
   if (!email || !password) {
     return res.status(400).send(`
@@ -77,17 +79,17 @@ app.post('/register', (req, res) => {
 
   const newID = generateRandomString();
 
-  users[newID] = {
+  users[newID] = { // Add the user to the database
     id: newID,
     email: req.body.email,
     password: hashedPassword,
   },
 
-  req.session.userId = newID;
+  req.session.userId = newID; // Set a new cookie
   res.redirect('/urls');
 });
 
-// The two functions below control the '/login' url
+// Access the login page of TinyApp
 
 app.get('/login', (req, res) => {
   const userId = req.session.userId;
@@ -100,6 +102,8 @@ app.get('/login', (req, res) => {
     res.render('login', templateVars);
   }
 });
+
+// Login to the site in order to view url's and gain permissions
 
 app.post('/login', (req, res) => {
   const email = req.body.email;
@@ -144,7 +148,7 @@ app.get('/urls', (req, res) => {
   const templateVars = { user, urls };
 
   if (!user) {
-    res.send(`
+    res.status(403).send(`
       <h1>To access your URLs page, please login first.</h1>
       <a href="/login">Login here!</a>
     `);
@@ -159,7 +163,7 @@ app.post('/urls', (req, res) => {
   const userId = req.session.userId;
   const user = users[userId];
   if (!user) {
-    return res.send(`
+    return res.status(403).send(`
       <h1>You must be logged in to shorten URLs</h1>
     `);
   } else {
@@ -192,19 +196,19 @@ app.get('/urls/new', (req, res) => {
 app.get('/urls/:id', (req, res) => {
   const urlID = req.params.id;
   const urlEntry = urlDataBase[urlID];
-  const longURL = urlEntry ? urlEntry.longURL : null;
+  const longURL = urlEntry ? urlEntry.longURL : null; // Checks if a longURL exists for the urlEntry
   
   const userId = req.session.userId;
   const user = users[userId];
   const templateVars = { user, id: urlID, longURL };
 
   if (!user) {
-    return res.send(`
+    return res.status(403).send(`
       <h1>You must be logged in to view this page.</h1>
       <a href="/login">Login here!</a>
     `);
   } else if (user && !urlsForUser(userId, urlDataBase)[urlID]) {
-    return res.send(`
+    return res.status(403).send(`
       <h1>You do not own the shortened URL ID ${urlID}</h1>  
     `);
   } else {
@@ -219,7 +223,7 @@ app.get('/u/:id', (req, res) => {
   const longURL = urlDataBase[urlId];
 
   if (!longURL) {
-    res.send(`
+    res.status(404).send(`
       <h1>The shortened ID ${urlId} does not exist at http://localhost:8080/u/${urlId}</h1>
     `);
   } else {
@@ -236,11 +240,11 @@ app.post('/urls/:id', (req, res) => {
   const newLongURL = req.body.longURL;
 
   if (!urlDataBase[urlId]) {
-    return res.send(`<h1>The short URL ID ${urlId} does not exist.</h1>`);
+    return res.status(404).send(`<h1>The short URL ID ${urlId} does not exist.</h1>`);
   } else if (!user) {
-    return res.send(`<h1>You must log in to edit a URL!</h1>`);
+    return res.status(403).send(`<h1>You must log in to edit a URL!</h1>`);
   } else if (user && !urlsForUser(userId, urlDataBase)[urlId]) {
-    return res.send(`<h1>You do not own this short URL!</h1>`);
+    return res.status(403).send(`<h1>You do not own this short URL!</h1>`);
   } else {
     urlDataBase[urlId].longURL = newLongURL;
     res.redirect('/urls');
@@ -255,11 +259,11 @@ app.post('/urls/:id/delete', (req, res) => {
   const urlId = req.params.id;
 
   if (!urlDataBase[urlId]) {
-    return res.send(`<h1>The short URL ID ${urlId} does not exist.</h1>`);
+    return res.status(404).send(`<h1>The short URL ID ${urlId} does not exist.</h1>`);
   } else if (!user) {
-    return res.send(`<h1>You must log in to delete a URL!</h1>`);
+    return res.status(403).send(`<h1>You must log in to delete a URL!</h1>`);
   } else if (user && !urlsForUser(userId, urlDataBase)[urlId]) {
-    return res.send(`<h1>You do not own this short URL!</h1>`);
+    return res.status(403).send(`<h1>You do not own this short URL!</h1>`);
   } else {
     delete urlDataBase[urlId];
     res.redirect('/urls');

@@ -68,7 +68,7 @@ app.get('/register', (req, res) => {
   const user_id = req.cookies['user_id'];
   const user = users[user_id];
   const templateVars = { user };
-  
+
   if (user) {
     res.redirect('/urls');
   } else {
@@ -168,6 +168,14 @@ app.get('/urls', (req, res) => {
 // Posts a new url and short url to page '/urls'
 
 app.post('/urls', (req, res) => {
+  const user_id = req.cookies['user_id'];
+  const user = users[user_id];
+  if (!user) {
+    return res.send(`
+      <h1>You must be logged in to shorten URLs</h1>
+    `);
+  }
+
   const shortId = generateRandomString();
   urlDataBase[shortId] = req.body.longURL;
   res.redirect(`/urls/${shortId}`);
@@ -179,7 +187,12 @@ app.get('/urls/new', (req, res) => {
   const user_id = req.cookies['user_id'];
   const user = users[user_id];
   const templateVars = { user }
-  res.render('urls_new', templateVars);
+
+  if (!user) {
+    res.redirect('/login');
+  } else {
+    res.render('urls_new', templateVars);
+  }
 });
 
 // Fetches a page for a specific short url id
@@ -199,7 +212,14 @@ app.get('/urls/:id', (req, res) => {
 app.get('/u/:id', (req, res) => {
   const urlId = req.params.id;
   const longURL = urlDataBase[urlId];
-  res.redirect(longURL);
+
+  if (!longURL) {
+    res.send(`
+      <h1>The shortened ID ${urlId} does not exist at http://localhost:8080/u/${urlId}</h1>
+    `);
+  } else {
+    res.redirect(longURL);
+  }
 });
 
 // Update an existing long url

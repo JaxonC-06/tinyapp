@@ -1,26 +1,20 @@
 // Initializing the app, and importing the required packages
 
-const express = require('express');
-const cookieSession = require('cookie-session');
-const bcrypt = require('bcryptjs');
-const { userLookup, urlsForUser } = require('./helpers');
+const express = require('express'); 
+const cookieSession = require('cookie-session'); // Access the cookies
+const bcrypt = require('bcryptjs'); // Bcrypt is used to protect passwords
+const { userLookup, urlsForUser, generateRandomString } = require('./helpers');
 const app = express();
 const PORT = 8080; // default port
 
 // Set up app to use EJS and cookie-parser
 
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true })); // Set encoding
 app.use(cookieSession({
   name: 'session',
   keys: ['lighthouse'],
 }));
-app.set('view engine', 'ejs');
-
-// This function generates a random string, to be used with links and user_id's
-
-function generateRandomString() {
-  return Math.random().toString(36).slice(2, 8);
-};
+app.set('view engine', 'ejs'); // Use EJS templates with the app
 
 const urlDataBase = {
   'b2xVn2': {
@@ -46,25 +40,11 @@ const users = {
   },
 };
 
-// The following three functions are implemented for project grading, but provide no practical use
-
-app.get('/', (req, res) => {
-  res.send('Hello!');
-});
-
-app.get('/urls.json', (req, res) => {
-  res.json(urlDataBase);
-});
-
-app.get('/hello', (req, res) => {
-  res.send('<html><body>Hello <b>World</b></body></html>\n');
-});
-
 // The two functions below control the '/register' url
 
 app.get('/register', (req, res) => {
-  const user_id = req.session.user_id;
-  const user = users[user_id];
+  const userId = req.session.userId;
+  const user = users[userId];
   const templateVars = { user };
 
   if (user) {
@@ -103,15 +83,15 @@ app.post('/register', (req, res) => {
     password: hashedPassword,
   },
 
-  req.session.user_id = newID;
+  req.session.userId = newID;
   res.redirect('/urls');
 });
 
 // The two functions below control the '/login' url
 
 app.get('/login', (req, res) => {
-  const user_id = req.session.user_id;
-  const user = users[user_id];
+  const userId = req.session.userId;
+  const user = users[userId];
   const templateVars = { user };
 
   if (user) {
@@ -136,7 +116,7 @@ app.post('/login', (req, res) => {
 
   if (user) {
     if (bcrypt.compareSync(password, user.password)) {
-      req.session.user_id = user.id;
+      req.session.userId = user.id;
       res.redirect('/urls');
     } else {
       return res.status(403).send(`
@@ -158,9 +138,9 @@ app.post('/logout', (req, res) => {
 // User can view their saved urls
 
 app.get('/urls', (req, res) => {
-  const user_id = req.session.user_id;
-  const user = users[user_id];
-  const urls = urlsForUser(user_id, urlDataBase);
+  const userId = req.session.userId;
+  const user = users[userId];
+  const urls = urlsForUser(userId, urlDataBase);
   const templateVars = { user, urls };
 
   if (!user) {
@@ -176,8 +156,8 @@ app.get('/urls', (req, res) => {
 // Posts a new url and short url to page '/urls'
 
 app.post('/urls', (req, res) => {
-  const user_id = req.session.user_id;
-  const user = users[user_id];
+  const userId = req.session.userId;
+  const user = users[userId];
   if (!user) {
     return res.send(`
       <h1>You must be logged in to shorten URLs</h1>
@@ -186,7 +166,7 @@ app.post('/urls', (req, res) => {
     const shortId = generateRandomString();
     urlDataBase[shortId] = {
       longURL: req.body.longURL,
-      userID: user_id,
+      userID: userId,
     };
   
     res.redirect(`/urls/${shortId}`);
@@ -196,9 +176,9 @@ app.post('/urls', (req, res) => {
 // Create a new short url
 
 app.get('/urls/new', (req, res) => {
-  const user_id = req.session.user_id;
-  const user = users[user_id];
-  const templateVars = { user }
+  const userId = req.session.userId;
+  const user = users[userId];
+  const templateVars = { user };
 
   if (!user) {
     res.redirect('/login');
@@ -214,8 +194,8 @@ app.get('/urls/:id', (req, res) => {
   const urlEntry = urlDataBase[urlID];
   const longURL = urlEntry ? urlEntry.longURL : null;
   
-  const user_id = req.session.user_id;
-  const user = users[user_id];
+  const userId = req.session.userId;
+  const user = users[userId];
   const templateVars = { user, id: urlID, longURL };
 
   if (!user) {
@@ -223,7 +203,7 @@ app.get('/urls/:id', (req, res) => {
       <h1>You must be logged in to view this page.</h1>
       <a href="/login">Login here!</a>
     `);
-  } else if (user && !urlsForUser(user_id, urlDataBase)[urlID]) {
+  } else if (user && !urlsForUser(userId, urlDataBase)[urlID]) {
     return res.send(`
       <h1>You do not own the shortened URL ID ${urlID}</h1>  
     `);
@@ -250,8 +230,8 @@ app.get('/u/:id', (req, res) => {
 // Update an existing long url
 
 app.post('/urls/:id', (req, res) => {
-  const user_id = req.session.user_id;
-  const user = users[user_id];
+  const userId = req.session.userId;
+  const user = users[userId];
   const urlId = req.params.id;
   const newLongURL = req.body.longURL;
 
@@ -259,7 +239,7 @@ app.post('/urls/:id', (req, res) => {
     return res.send(`<h1>The short URL ID ${urlId} does not exist.</h1>`);
   } else if (!user) {
     return res.send(`<h1>You must log in to edit a URL!</h1>`);
-  } else if (user && !urlsForUser(user_id, urlDataBase)[urlId]) {
+  } else if (user && !urlsForUser(userId, urlDataBase)[urlId]) {
     return res.send(`<h1>You do not own this short URL!</h1>`);
   } else {
     urlDataBase[urlId].longURL = newLongURL;
@@ -270,15 +250,15 @@ app.post('/urls/:id', (req, res) => {
 // Delete a short and long url pair
 
 app.post('/urls/:id/delete', (req, res) => {
-  const user_id = req.session.user_id;
-  const user = users[user_id];
+  const userId = req.session.userId;
+  const user = users[userId];
   const urlId = req.params.id;
 
   if (!urlDataBase[urlId]) {
     return res.send(`<h1>The short URL ID ${urlId} does not exist.</h1>`);
   } else if (!user) {
     return res.send(`<h1>You must log in to delete a URL!</h1>`);
-  } else if (user && !urlsForUser(user_id, urlDataBase)[urlId]) {
+  } else if (user && !urlsForUser(userId, urlDataBase)[urlId]) {
     return res.send(`<h1>You do not own this short URL!</h1>`);
   } else {
     delete urlDataBase[urlId];

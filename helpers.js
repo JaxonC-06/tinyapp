@@ -2,7 +2,7 @@
 
 const userLookup = function (email, database) {
   for (const userID in database) {
-    const currentUser = database[userID]
+    const currentUser = database[userID];
     if (currentUser.email === email) {
       return currentUser;
     }
@@ -25,4 +25,10 @@ const urlsForUser = function (id, database) {
   return usersShortURLs;
 };
 
-module.exports = { userLookup, urlsForUser };
+// This function generates a random string
+
+const generateRandomString = function() {
+  return Math.random().toString(36).slice(2, 8);
+};
+
+module.exports = { userLookup, urlsForUser, generateRandomString };

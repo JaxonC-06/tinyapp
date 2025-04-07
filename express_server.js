@@ -3,6 +3,7 @@
 const express = require('express');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
+const { userLookup } = require('./helpers');
 const app = express();
 const PORT = 8080; // default port
 
@@ -43,19 +44,6 @@ const users = {
     email: "user2@example.com",
     password: "grey-zebra-coder",
   },
-};
-
-// This function verifies a registered user
-
-const userLookup = function (email) {
-  for (const userID in users) {
-    const currentUser = users[userID]
-    if (currentUser.email === email) {
-      return currentUser;
-    }
-  }
-
-  return null;
 };
 
 const urlsForUser = function (id) {
@@ -111,7 +99,7 @@ app.post('/register', (req, res) => {
     `);
   }
 
-  if (userLookup(email)) {
+  if (userLookup(email, users)) {
     return res.status(400).send(`
       <h1>400: Page Not Found</h1>
       <h3>An account with this email already exists, please try again.</h3>
@@ -148,7 +136,7 @@ app.get('/login', (req, res) => {
 app.post('/login', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  const user = userLookup(email);
+  const user = userLookup(email, users);
 
   if (!user) {
     return res.status(403).send(`

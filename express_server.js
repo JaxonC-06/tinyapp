@@ -18,8 +18,14 @@ function generateRandomString() {
 };
 
 const urlDataBase = {
-  'b2xVn2': 'http://www.lighthouselabs.ca',
-  '9sm5xK': 'http://www.google.com',
+  'b2xVn2': {
+    longURL: 'http://www.lighthouselabs.ca',
+    userID: 'aJ481W',
+  },
+  '9sm5xK': {
+    longURL: 'http://www.google.com',
+    userID: 'aJ481W',
+  },
 };
 
 const users = {
@@ -46,6 +52,18 @@ const userLookup = function (email) {
   }
 
   return null;
+};
+
+const urlsForUser = function (id) {
+  const usersShortURLs = {};
+
+  for (const shortURL in urlDataBase) {
+    if (urlDataBase[shortURL].userID === id) {
+      usersShortURLs[shortURL] = urlDataBase[shortURL];
+    }
+  }
+
+  return usersShortURLs;
 };
 
 // The following three functions are implemented for project grading, but provide no practical use
@@ -161,8 +179,17 @@ app.post('/logout', (req, res) => {
 app.get('/urls', (req, res) => {
   const user_id = req.cookies['user_id'];
   const user = users[user_id];
-  const templateVars = { user, urls: urlDataBase };
-  res.render('urls_index', templateVars);
+  const urls = urlsForUser(user_id);
+  const templateVars = { user, urls };
+
+  if (!user) {
+    res.send(`
+      <h1>To access your URLs page, please login first.</h1>
+      <a href="/login">Login here!</a>
+    `);
+  } else {
+    res.render('urls_index', templateVars);
+  }
 });
 
 // Posts a new url and short url to page '/urls'
@@ -177,7 +204,11 @@ app.post('/urls', (req, res) => {
   }
 
   const shortId = generateRandomString();
-  urlDataBase[shortId] = req.body.longURL;
+  urlDataBase[shortId] = {
+    longURL: req.body.longURL,
+    userID: user_id,
+  };
+  
   res.redirect(`/urls/${shortId}`);
 });
 
@@ -199,12 +230,25 @@ app.get('/urls/new', (req, res) => {
 
 app.get('/urls/:id', (req, res) => {
   const urlID = req.params.id;
-  const longURL = urlDataBase[urlID];
+  const urlEntry = urlDataBase[urlID];
+  const longURL = urlEntry ? urlEntry.longURL : null;
   
   const user_id = req.cookies['user_id'];
   const user = users[user_id];
   const templateVars = { user, id: urlID, longURL };
-  res.render('urls_show', templateVars);
+
+  if (!user) {
+    return res.send(`
+      <h1>You must be logged in to view this page.</h1>
+      <a href="/login">Login here!</a>
+    `);
+  } else if (user && !urlsForUser(user_id)[urlID]) {
+    return res.send(`
+      <h1>You do not own the shortened URL ID ${urlID}</h1>  
+    `);
+  } else {
+    res.render('urls_show', templateVars);
+  }
 });
 
 // Uses the short id to access the normal url
@@ -225,20 +269,40 @@ app.get('/u/:id', (req, res) => {
 // Update an existing long url
 
 app.post('/urls/:id', (req, res) => {
+  const user_id = req.cookies['user_id'];
+  const user = users[user_id];
   const urlId = req.params.id;
   const newLongURL = req.body.longURL;
 
-  urlDataBase[urlId] = newLongURL;
-  res.redirect('/urls');
+  if (!urlDataBase[urlId]) {
+    return res.send(`<h1>The short URL ID ${urlId} does not exist.</h1>`);
+  } else if (!user) {
+    return res.send(`<h1>You must log in to edit a URL!</h1>`);
+  } else if (user && !urlsForUser(user_id)[urlId]) {
+    return res.send(`<h1>You do not own this short URL!</h1>`);
+  } else {
+    urlDataBase[urlId].longURL = newLongURL;
+    res.redirect('/urls');
+  }
 });
 
 // Delete a short and long url pair
 
 app.post('/urls/:id/delete', (req, res) => {
+  const user_id = req.cookies['user_id'];
+  const user = users[user_id];
   const urlId = req.params.id;
 
-  delete urlDataBase[urlId];
-  res.redirect('/urls');
+  if (!urlDataBase[urlId]) {
+    return res.send(`<h1>The short URL ID ${urlId} does not exist.</h1>`);
+  } else if (!user) {
+    return res.send(`<h1>You must log in to delete a URL!</h1>`);
+  } else if (user && !urlsForUser(user_id)[urlId]) {
+    return res.send(`<h1>You do not own this short URL!</h1>`);
+  } else {
+    delete urlDataBase[urlId];
+    res.redirect('/urls');
+  }
 });
 
 app.listen(PORT, () => {

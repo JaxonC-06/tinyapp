@@ -1,7 +1,7 @@
 // Initializing the app, and importing the required packages
 
 const express = require('express');
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 const app = express();
 const PORT = 8080; // default port
@@ -9,7 +9,10 @@ const PORT = 8080; // default port
 // Set up app to use EJS and cookie-parser
 
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['lighthouse'],
+}));
 app.set('view engine', 'ejs');
 
 // This function generates a random string, to be used with links and user_id's
@@ -84,7 +87,7 @@ app.get('/hello', (req, res) => {
 // The two functions below control the '/register' url
 
 app.get('/register', (req, res) => {
-  const user_id = req.cookies['user_id'];
+  const user_id = req.session.user_id;
   const user = users[user_id];
   const templateVars = { user };
 
@@ -124,14 +127,14 @@ app.post('/register', (req, res) => {
     password: hashedPassword,
   },
 
-  res.cookie('user_id', newID);
+  req.session.user_id = newID;
   res.redirect('/urls');
 });
 
 // The two functions below control the '/login' url
 
 app.get('/login', (req, res) => {
-  const user_id = req.cookies['user_id'];
+  const user_id = req.session.user_id;
   const user = users[user_id];
   const templateVars = { user };
 
@@ -157,7 +160,7 @@ app.post('/login', (req, res) => {
 
   if (user) {
     if (bcrypt.compareSync(password, user.password)) {
-      res.cookie('user_id', user.id);
+      req.session.user_id = user.id;
       res.redirect('/urls');
     } else {
       return res.status(403).send(`
@@ -172,14 +175,14 @@ app.post('/login', (req, res) => {
 // The '/logout' function allows the user to clear their cookies
 
 app.post('/logout', (req, res) => {
-  res.clearCookie('user_id');
+  req.session = null;
   res.redirect('/login');
 });
 
 // User can view their saved urls
 
 app.get('/urls', (req, res) => {
-  const user_id = req.cookies['user_id'];
+  const user_id = req.session.user_id;
   const user = users[user_id];
   const urls = urlsForUser(user_id);
   const templateVars = { user, urls };
@@ -197,7 +200,7 @@ app.get('/urls', (req, res) => {
 // Posts a new url and short url to page '/urls'
 
 app.post('/urls', (req, res) => {
-  const user_id = req.cookies['user_id'];
+  const user_id = req.session.user_id;
   const user = users[user_id];
   if (!user) {
     return res.send(`
@@ -217,7 +220,7 @@ app.post('/urls', (req, res) => {
 // Create a new short url
 
 app.get('/urls/new', (req, res) => {
-  const user_id = req.cookies['user_id'];
+  const user_id = req.session.user_id;
   const user = users[user_id];
   const templateVars = { user }
 
@@ -235,7 +238,7 @@ app.get('/urls/:id', (req, res) => {
   const urlEntry = urlDataBase[urlID];
   const longURL = urlEntry ? urlEntry.longURL : null;
   
-  const user_id = req.cookies['user_id'];
+  const user_id = req.session.user_id;
   const user = users[user_id];
   const templateVars = { user, id: urlID, longURL };
 
@@ -271,7 +274,7 @@ app.get('/u/:id', (req, res) => {
 // Update an existing long url
 
 app.post('/urls/:id', (req, res) => {
-  const user_id = req.cookies['user_id'];
+  const user_id = req.session.user_id;
   const user = users[user_id];
   const urlId = req.params.id;
   const newLongURL = req.body.longURL;
@@ -291,7 +294,7 @@ app.post('/urls/:id', (req, res) => {
 // Delete a short and long url pair
 
 app.post('/urls/:id/delete', (req, res) => {
-  const user_id = req.cookies['user_id'];
+  const user_id = req.session.user_id;
   const user = users[user_id];
   const urlId = req.params.id;
 

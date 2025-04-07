@@ -3,7 +3,7 @@
 const express = require('express');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
-const { userLookup } = require('./helpers');
+const { userLookup, urlsForUser } = require('./helpers');
 const app = express();
 const PORT = 8080; // default port
 
@@ -44,18 +44,6 @@ const users = {
     email: "user2@example.com",
     password: "grey-zebra-coder",
   },
-};
-
-const urlsForUser = function (id) {
-  const usersShortURLs = {};
-
-  for (const shortURL in urlDataBase) {
-    if (urlDataBase[shortURL].userID === id) {
-      usersShortURLs[shortURL] = urlDataBase[shortURL];
-    }
-  }
-
-  return usersShortURLs;
 };
 
 // The following three functions are implemented for project grading, but provide no practical use
@@ -172,7 +160,7 @@ app.post('/logout', (req, res) => {
 app.get('/urls', (req, res) => {
   const user_id = req.session.user_id;
   const user = users[user_id];
-  const urls = urlsForUser(user_id);
+  const urls = urlsForUser(user_id, urlDataBase);
   const templateVars = { user, urls };
 
   if (!user) {
@@ -235,7 +223,7 @@ app.get('/urls/:id', (req, res) => {
       <h1>You must be logged in to view this page.</h1>
       <a href="/login">Login here!</a>
     `);
-  } else if (user && !urlsForUser(user_id)[urlID]) {
+  } else if (user && !urlsForUser(user_id, urlDataBase)[urlID]) {
     return res.send(`
       <h1>You do not own the shortened URL ID ${urlID}</h1>  
     `);
@@ -271,7 +259,7 @@ app.post('/urls/:id', (req, res) => {
     return res.send(`<h1>The short URL ID ${urlId} does not exist.</h1>`);
   } else if (!user) {
     return res.send(`<h1>You must log in to edit a URL!</h1>`);
-  } else if (user && !urlsForUser(user_id)[urlId]) {
+  } else if (user && !urlsForUser(user_id, urlDataBase)[urlId]) {
     return res.send(`<h1>You do not own this short URL!</h1>`);
   } else {
     urlDataBase[urlId].longURL = newLongURL;
@@ -290,7 +278,7 @@ app.post('/urls/:id/delete', (req, res) => {
     return res.send(`<h1>The short URL ID ${urlId} does not exist.</h1>`);
   } else if (!user) {
     return res.send(`<h1>You must log in to delete a URL!</h1>`);
-  } else if (user && !urlsForUser(user_id)[urlId]) {
+  } else if (user && !urlsForUser(user_id, urlDataBase)[urlId]) {
     return res.send(`<h1>You do not own this short URL!</h1>`);
   } else {
     delete urlDataBase[urlId];

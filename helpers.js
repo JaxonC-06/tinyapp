@@ -11,4 +11,18 @@ const userLookup = function (email, database) {
   return null;
 };
 
-module.exports = { userLookup }
+// This function finds a specific users shortURL ID's
+
+const urlsForUser = function (id, database) {
+  const usersShortURLs = {};
+
+  for (const shortURL in database) {
+    if (database[shortURL].userID === id) {
+      usersShortURLs[shortURL] = database[shortURL];
+    }
+  }
+
+  return usersShortURLs;
+};
+
+module.exports = { userLookup, urlsForUser };

@@ -4,9 +4,9 @@ TinyApp is a full stack web application built with [Node](https://nodejs.org/en)
 
 ## Final Product
 
-!["Users must register to begin."](/home/labber/lighthouse/tinyapp/docs/user-register.png)
-!["Users can view all of their urls."](/home/labber/lighthouse/tinyapp/docs/user-urls.png)
-!["Users can edit their previosu urls."](/home/labber/lighthouse/tinyapp/docs/user-edit.png)
+!["Users must register to begin."](https://github.com/JaxonC-06/tinyapp/blob/master/docs/user-register.png)
+!["Users can view all of their urls."](https://github.com/JaxonC-06/tinyapp/blob/master/docs/user-urls.png)
+!["Users can edit their previosu urls."](https://github.com/JaxonC-06/tinyapp/blob/master/docs/user-edit.png)
 
 ## Dependencies
 
